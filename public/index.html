@@ -1,106 +1,31 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Socket.IO with WebRTC</title>
-</head>
-<body>
-  <h1>Socket.IO with WebRTC</h1>
-  
-  <!-- Add the WebRTC video elements -->
-  <video id="localVideo" autoplay muted></video>
-  <video id="remoteVideo" autoplay></video>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebRTC POC</title>
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <!-- Add the WebRTC video elements -->
+    <div class="video-wrapper">
+      <video id="localVideo" autoplay muted></video>
+      <video id="remoteVideo" autoplay></video>
 
-  <!-- Include Socket.IO library -->
-  <!-- <script src="/socket.io/socket.io.js"></script> -->
-  <script src="/socket.io/socket.io.js"></script>
+      <div class="controllers-wrapper">
+        <!-- Disable camera button -->
+        <button id="disableCameraButton">
+          <img src="./enable-camera.svg" alt="" />
+        </button>
+        <!-- Mute button -->
+        <button id="muteButton">
+          <img src="./unmute.svg" alt="" />
+        </button>
+      </div>
+    </div>
 
-  <script>
-    // Connect to the Socket.IO server
-    const socket = io();
-
-    // Get the local video stream
-    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-      .then((stream) => {
-        const localVideo = document.getElementById('localVideo');
-        localVideo.srcObject = stream;
-
-        // Create a new WebRTC peer connection
-        const peerConnection = new RTCPeerConnection({
-          iceServers: [
-            { urls: 'stun:192.168.64.3:3478' }, // Replace with your STUN server URL
-            {
-              urls: 'turn:192.198.64.3:3478', // Replace with your TURN server URL
-              username: 'kurvatov',      // Replace with your TURN server username
-              credential: 'password123'     // Replace with your TURN server password
-            }
-          ]
-        });
-
-        // Add the local stream to the peer connection
-        stream.getTracks().forEach((track) => {
-          peerConnection.addTrack(track, stream);
-        });
-
-        // Listen for ICE candidates and send them to the other peer
-        peerConnection.addEventListener('icecandidate', (event) => {
-          if (event.candidate) {
-            socket.emit('ice-candidate', event.candidate);
-          }
-        });
-
-        // Listen for remote tracks and add them to the remote video element
-        peerConnection.addEventListener('track', (event) => {
-          const remoteVideo = document.getElementById('remoteVideo');
-          if (!remoteVideo.srcObject) {
-            remoteVideo.srcObject = new MediaStream();
-          }
-          remoteVideo.srcObject.addTrack(event.track);
-        });
-
-        // Send the offer to the other peer
-        peerConnection.createOffer()
-          .then((offer) => {
-            socket.emit('offer', offer);
-            return peerConnection.setLocalDescription(offer);
-          })
-          .catch((error) => {
-            console.error('Error creating offer:', error);
-          });
-
-        // Handle the received offer
-        socket.on('offer', (offer) => {
-          peerConnection.setRemoteDescription(offer)
-            .then(() => {
-              return peerConnection.createAnswer();
-            })
-            .then((answer) => {
-              socket.emit('answer', answer);
-              return peerConnection.setLocalDescription(answer);
-            })
-            .catch((error) => {
-              console.error('Error creating answer:', error);
-            });
-        });
-
-        // Handle the received answer
-        socket.on('answer', (answer) => {
-          peerConnection.setRemoteDescription(answer)
-            .catch((error) => {
-              console.error('Error setting remote description:', error);
-            });
-        });
-
-        // Handle the received ICE candidate
-        socket.on('ice-candidate', (candidate) => {
-          peerConnection.addIceCandidate(candidate)
-            .catch((error) => {
-              console.error('Error adding ICE candidate:', error);
-            });
-        });
-      })
-      .catch((error) => {
-        console.error('Error accessing media devices:', error);
-      });
-  </script>
-</body>
+    <!-- Include Socket.IO library -->
+    <script src="/socket.io/socket.io.js"></script>
+  </body>
+  <script src="./main.js"></script>
 </html>
