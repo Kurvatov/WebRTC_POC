@@ -87,12 +87,12 @@ navigator.mediaDevices
     );
     disableCameraButton.addEventListener("click", () => {
       if (isCameraEnabled) {
-        stream.getTracks().forEach((track) => {
+        stream.getVideoTracks().forEach((track) => {
           track.enabled = false;
         });
         disableCameraButton.querySelector('img').src = './disable-camera.svg';
       } else {
-        stream.getTracks().forEach((track) => {
+        stream.getVideoTracks().forEach((track) => {
           track.enabled = true;
         });
         disableCameraButton.querySelector('img').src = './enable-camera.svg';
